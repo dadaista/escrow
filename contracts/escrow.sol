@@ -4,11 +4,11 @@ contract Escrow{
     address arbiter;
     address payable customer;
     address payable supplier;
-    bool UNCLAIMED  = true;
-    bool CLAIMED    = false;
-    bool APPROVED   = false;
-    bool PAID       = false;
-    address payable claimer;
+    bool public UNCLAIMED  = true;
+    bool public CLAIMED    = false;
+    bool public APPROVED   = false;
+    bool public PAID       = false;
+    address payable public claimer;
     
     
     constructor(address payable _customer, 
@@ -24,6 +24,7 @@ contract Escrow{
 
     function claim() external{
         require(UNCLAIMED);
+        require(msg.sender == customer || msg.sender == supplier);
         claimer = msg.sender;
         CLAIMED = true;
     }
