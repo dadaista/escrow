@@ -1,5 +1,5 @@
 
-pragma solidity 0.5;
+pragma solidity 0.5.12;
 contract Escrow{
     address arbiter;
     address payable customer;
@@ -19,6 +19,8 @@ contract Escrow{
         supplier = _supplier;
         arbiter  = _arbiter;
     }
+
+    function () external payable{}
 
     function claim() external{
         require(UNCLAIMED);
