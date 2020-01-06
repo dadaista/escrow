@@ -40,11 +40,15 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   it('customer or supplier can claim and become claimer', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(customer);
-    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
-    (await escrow.claimer.call()).should.be.equal(supplier);
+
+    escrow2 = await Escrow.new(customer,supplier,arbiter);
+
+    await escrow2.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow2.claimer.call()).should.be.equal(supplier);
+
   });
 
-  it('if claimed escrow become CLAIMED', async function () {
+  it('unclaimed escrow can be CLAIMED', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
     (await escrow.CLAIMED.call()).should.be.equal(true);
  
@@ -57,7 +61,7 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
  
   });  
 
-  it('arbiter cannot claim money', async function () {
+  it('arbiter cannot claim', async function () {
     await escrow.claim.sendTransaction({from:arbiter}).should.be.rejected; 
   });
 
@@ -68,11 +72,26 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     (await escrow.APPROVED.call()).should.be.equal(true);
   });
 
+  it('supplier can approve claim of customer', async function () {
+    await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(customer);    
+    await escrow.approve.sendTransaction({from:supplier}).should.be.fulfilled; 
+    (await escrow.APPROVED.call()).should.be.equal(true);
+  });
+
+
   it('supplier cannot approve his own claim', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(supplier);    
     await escrow.approve.sendTransaction({from:supplier}).should.be.rejected; 
   });
+
+  it('customer cannot approve his own claim', async function () {
+    await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(customer);    
+    await escrow.approve.sendTransaction({from:customer}).should.be.rejected; 
+  });
+
 
   it('arbiter can approve supplier or customer claim', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
@@ -81,13 +100,31 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     (await escrow.APPROVED.call()).should.be.equal(true);
   });
 
-  it('arbiter can approve amount to pay and amount to reimburse', async function () {
-    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
-    (await escrow.claimer.call()).should.be.equal(supplier);    
-    await escrow.disapprove.sendTransaction({from:arbiter}).should.be.fulfilled; 
-    (await escrow.APPROVED.call()).should.be.equal(true);
+  it('unclaimed escrow cannot be approved', async function () {
+    await escrow.approve.sendTransaction({from:supplier}).should.be.rejected;
+    await escrow.approve.sendTransaction({from:arbiter}).should.be.rejected; 
+    await escrow.approve.sendTransaction({from:customer}).should.be.rejected; 
 
   });
+
+  it('claimed yet unapproved escrow cannot be withdrawn', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    await escrow.withdraw.sendTransaction({from:supplier}).should.be.rejected;
+  });
+
+  it('approved escrow can be withdrawn', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled;
+    await escrow.withdraw.sendTransaction({from:supplier}).should.be.fulfilled;
+  });
+
+  it('approved escrow can be withdrawn by claimer only', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled;
+    await escrow.withdraw.sendTransaction({from:customer}).should.be.rejected;
+  });
+
+
 
 
 });

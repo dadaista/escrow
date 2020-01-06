@@ -9,7 +9,6 @@ contract Escrow{
     bool public APPROVED   = false;
     bool public PAID       = false;
     address payable public claimer;
-    uint256 public reimbursable = 0;
     
     
     constructor(address payable _customer, 
