@@ -50,8 +50,43 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
  
   });
 
+ it('funds cannot be claimed more than once', async function () {
+    await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
+    (await escrow.CLAIMED.call()).should.be.equal(true);
+    await escrow.claim.sendTransaction({from:supplier}).should.be.rejected;
+ 
+  });  
+
   it('arbiter cannot claim money', async function () {
     await escrow.claim.sendTransaction({from:arbiter}).should.be.rejected; 
+  });
+
+  it('customer can approve claim of supplier', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(supplier);    
+    await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled; 
+    (await escrow.APPROVED.call()).should.be.equal(true);
+  });
+
+  it('supplier cannot approve his own claim', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(supplier);    
+    await escrow.approve.sendTransaction({from:supplier}).should.be.rejected; 
+  });
+
+  it('arbiter can approve supplier or customer claim', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(supplier);    
+    await escrow.approve.sendTransaction({from:arbiter}).should.be.fulfilled; 
+    (await escrow.APPROVED.call()).should.be.equal(true);
+  });
+
+  it('arbiter can approve amount to pay and amount to reimburse', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(supplier);    
+    await escrow.disapprove.sendTransaction({from:arbiter}).should.be.fulfilled; 
+    (await escrow.APPROVED.call()).should.be.equal(true);
+
   });
 
 

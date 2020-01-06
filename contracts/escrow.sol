@@ -9,6 +9,7 @@ contract Escrow{
     bool public APPROVED   = false;
     bool public PAID       = false;
     address payable public claimer;
+    uint256 public reimbursable = 0;
     
     
     constructor(address payable _customer, 
@@ -27,6 +28,7 @@ contract Escrow{
         require(msg.sender == customer || msg.sender == supplier);
         claimer = msg.sender;
         CLAIMED = true;
+        UNCLAIMED = false;
     }
     
     
@@ -34,6 +36,14 @@ contract Escrow{
         require(CLAIMED);
         require(msg.sender != claimer);
         APPROVED = true;
+        CLAIMED = false;
+    }
+
+    function rejectClaim() external{
+        require(CLAIMED);
+        require(msg.sender == arbiter);
+        CLAIMED = false;
+        UNCLAIMED = true;
     }
     
     function withdraw() external{
