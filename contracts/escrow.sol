@@ -38,12 +38,6 @@ contract Escrow{
         CLAIMED = false;
     }
 
-    function rejectClaim() external{
-        require(CLAIMED);
-        require(msg.sender == arbiter);
-        CLAIMED = false;
-        UNCLAIMED = true;
-    }
     
     function withdraw() external{
         require (APPROVED);
