@@ -5,28 +5,79 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@latest/dist/web3.js"></script>
     <script type="text/javascript">
 
-        window.addEventListener('load', function () {
-            if (typeof web3 !== 'undefined') {
-                console.log('Web3 Detected! ' + web3.currentProvider.constructor.name)
-                window.web3 = new Web3(web3.currentProvider);
-            }
-            else
-            	console.log("no web3 found");
-        })
+window.addEventListener('load', async () => {
+    // Modern dapp browsers...
+    if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+            // Request account access if needed
+            await ethereum.enable();
+            // Acccounts now exposed
+            var accs = await web3.eth.getAccounts();
+            console.log(accs[0]);
+            document.getElementById("address").innerHTML = accs[0];
+        } catch (error) {
+            // User denied account access...
+        }
+    }
+    // Legacy dapp browsers...
+    else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
+        // Acccounts always exposed
+        web3.eth.sendTransaction({/* ... */});
+    }
+    // Non-dapp browsers...
+    else {
+        console.log('Non-Ethereum browser detected. You should consider trying MetaMask!');
+    }
+});
 
 
     </script>
+
+
+<script type="text/javascript">
+	var abi=[
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "customer",
+          "type": "address"
+        },
+        {
+          "internalType": "address payable",
+          "name": "supplier",
+          "type": "address"
+        },
+        {
+          "internalType": "address payable",
+          "name": "arbiter",
+          "type": "address"
+        }
+      ],
+      "name": "createEscrow",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ];
+</script>    
 </head>
 
 <body>
 <body>
-    <h1>ETH Balance Fetcher</h1>
-    <p>Enter your Ethereum Address:</p>
-    <input type="text" size="50" id="address" />
-    <button type="button" onClick="getBalance();">Get Balance</button>
-    <br />
-    <br />
-    <div id="output"></div>
+    <h1>New escrow</h1>
+    <p>factory address is: 0xa8cB71E3E560B1D949399Ce0196647532A443e77</p>
+    <p>my address is </p>
+    <div id="address"></div>
+    <p>insert arguments for new escrow</p>
+    customer address <input type="text" name="customer" id="customer" /><br/>
+    supplier address <input type="text" name="supplier" id="supplier" /><br/>
+    arbiter address  <input type="text" name="arbiter" id="arbiter" /><br/>
+    <button onclick="alert(1)">create escrow</button>
 </body>
 
 
