@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@latest/dist/web3.js"></script>
+
+<script type="text/javascript">
+	var factoryAddress = '0xaE6E405ffaB7476C25B349c10928bc0A24FD2244';
+	var factoryContract;
+	var customer;
+	var supplier;
+	var arbiter;
+	var account;
+	var receipt;
+	var abi=[
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "a",
+          "type": "address"
+        }
+      ],
+      "name": "EscrowCreated",
+      "type": "event"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address payable",
+          "name": "customer",
+          "type": "address"
+        },
+        {
+          "internalType": "address payable",
+          "name": "supplier",
+          "type": "address"
+        },
+        {
+          "internalType": "address payable",
+          "name": "arbiter",
+          "type": "address"
+        }
+      ],
+      "name": "createEscrow",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ];
+
+  var dump=function(msg){
+  	console.log(msg);
+  	var stdout = document.getElementById("stdout");
+  	stdout.innerHTML += 
+  		"<p> [" + 
+  		new Date().toLocaleDateString() + 
+  		"  " + 
+  		new Date().toLocaleTimeString() + 
+  		"] " + 
+  		msg + "</p>";
+
+  }
+</script> 
+
+    <script type="text/javascript">
+
+window.addEventListener('load', async () => {
+    // Modern dapp browsers...
+    if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+            // Request account access if needed
+            await ethereum.enable();
+            // Acccounts now exposed
+            var accs = await web3.eth.getAccounts();
+            dump("account is" + accs[0]);
+            account = accs[0];
+            document.getElementById("account").innerHTML = accs[0];
+            document.getElementById("factoryAddress").innerHTML = factoryAddress;
+        } catch (error) {
+            // User denied account access...
+        }
+    }
+    // Legacy dapp browsers...
+    else if (window.web3) {
+        window.web3 = new Web3(web3.currentProvider);
+        // Acccounts always exposed
+        web3.eth.sendTransaction({/* ... */});
+    }
+    // Non-dapp browsers...
+    else {
+        dump('Non-Ethereum browser detected, install MetaMask!');
+    }
+});
+
+
+    </script>
+
+
+
+
+<script type="text/javascript">
+
+	function deploy(){
+		if (window.confirm("confirm deployment?")) {
+			factoryContract = new web3.eth.Contract(abi,factoryAddress);
+			customer = document.getElementById("customer").value;
+			supplier = document.getElementById("supplier").value;
+			arbiter = document.getElementById("arbiter").value;
+			dump("account is "+account);
+
+			factoryContract.events.EscrowCreated()
+			.on("data", function(evt){
+
+				dump("escrow created at:" + evt.returnValues.a);
+			});
+
+			factoryContract.methods.createEscrow(customer,supplier,arbiter)
+			.send({from: account})
+			.on('transactionHash', function(hash){
+				dump("transactionHash:" + hash);
+			})
+			.on('error', function(error, receipt) {
+				dump("err:"+error);
+			});
+
+
+		}
+		else{
+			//do nothing
+			dump("do nothing");
+		}
+	}
+</script>
+
+</head>
+
+<body>
+<body>
+    <h1>New escrow</h1>
+    <p>factory address is: <span id="factoryAddress">none</span></p>
+    <p>my address is </p>
+    <div id="account"></div>
+    <p>insert arguments for new escrow</p>
+    customer address <input type="text" 
+    						name="customer" 
+    						id="customer" 
+    						value="0x52F58e8da4c90F085883Acff99200a29BB34B429"/><br/>
+    supplier address <input type="text" 
+    						name="supplier" 
+    						id="supplier" 
+    						value="0x282Abcd86a45999dDD4c64F5634E94AfccbE0831" /><br/>
+
+    arbiter address  <input type="text" 
+    						name="arbiter" 
+    						id="arbiter" 
+    						value="0xc0cea0775c22fFC0d18B106370640F459Fce7063"/><br/>
+    <button onclick="deploy();">create escrow</button>
+    <br><br><br>
+    <p>stdout:</p>
+    <div id="stdout"></div>
+</body>
+
+
+
+</body>
+</html>
