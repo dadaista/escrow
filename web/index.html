@@ -1,45 +1,35 @@
+<!DOCTYPE html>
 <html>
 <head>
-<script src=”https://cdn.jsdelivr.net/gh/ethereum/web3.js/dist/web3.min.js"></script>
-<script type=”text/javascript”>
-var Web3 = require(‘web3’);
-var web3 = new Web3(window.web3.currentProvider);
-const address = '0xa8cB71E3E560B1D949399Ce0196647532A443e77';
-const abi = [
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "internalType": "address payable",
-          "name": "customer",
-          "type": "address"
-        },
-        {
-          "internalType": "address payable",
-          "name": "supplier",
-          "type": "address"
-        },
-        {
-          "internalType": "address payable",
-          "name": "arbiter",
-          "type": "address"
-        }
-      ],
-      "name": "createEscrow",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ];
-var contract = web3.eth.contract(abi);
-var factory = contract.at(address);
-factory.number.call(function(e, r) {
-console.log(r);
-});
-</script>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@latest/dist/web3.js"></script>
+    <script type="text/javascript">
+
+        window.addEventListener('load', function () {
+            if (typeof web3 !== 'undefined') {
+                console.log('Web3 Detected! ' + web3.currentProvider.constructor.name)
+                window.web3 = new Web3(web3.currentProvider);
+            }
+            else
+            	console.log("no web3 found");
+        })
+
+
+    </script>
 </head>
+
 <body>
-	<h1>Ciao</h1>
+<body>
+    <h1>ETH Balance Fetcher</h1>
+    <p>Enter your Ethereum Address:</p>
+    <input type="text" size="50" id="address" />
+    <button type="button" onClick="getBalance();">Get Balance</button>
+    <br />
+    <br />
+    <div id="output"></div>
+</body>
+
+
+
 </body>
 </html>
