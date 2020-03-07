@@ -5,7 +5,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@latest/dist/web3.js"></script>
 
 <script type="text/javascript">
-	var factoryAddress = '0xa8cB71E3E560B1D949399Ce0196647532A443e77';
+	var factoryAddress = '0xaE6E405ffaB7476C25B349c10928bc0A24FD2244';
 	var factoryContract;
 	var customer;
 	var supplier;
@@ -13,6 +13,19 @@
 	var account;
 	var receipt;
 	var abi=[
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "a",
+          "type": "address"
+        }
+      ],
+      "name": "EscrowCreated",
+      "type": "event"
+    },
     {
       "constant": false,
       "inputs": [
@@ -95,23 +108,22 @@ window.addEventListener('load', async () => {
 
 	function deploy(){
 		if (window.confirm("confirm deployment?")) {
-			dump("do something");
 			factoryContract = new web3.eth.Contract(abi,factoryAddress);
 			customer = document.getElementById("customer").value;
 			supplier = document.getElementById("supplier").value;
 			arbiter = document.getElementById("arbiter").value;
 			dump("account is "+account);
+
+			factoryContract.events.EscrowCreated()
+			.on("data", function(evt){
+
+				dump("escrow created at:" + evt.returnValues.a);
+			});
+
 			factoryContract.methods.createEscrow(customer,supplier,arbiter)
 			.send({from: account})
 			.on('transactionHash', function(hash){
 				dump("transactionHash:" + hash);
-			})
-			.on('receipt', function(rcpt){
-				receipt=rcpt;
-				dump("receipt:"+receipt);
-			})
-			.on('confirmation', function(confirmationNumber, receipt){
-				dump("confirmation:"+confirmationNumber);
 			})
 			.on('error', function(error, receipt) {
 				dump("err:"+error);

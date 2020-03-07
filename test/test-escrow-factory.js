@@ -18,5 +18,12 @@ contract('e-scrow-factory', function ([customer, supplier, arbiter]) {
   });
 
 
-  it('test', async function () {});
+  it('test sending create transaction ', async function () {
+  	await factory.createEscrow
+  		.sendTransaction(customer, supplier, arbiter,{from:customer})
+  		.should.be.fulfilled;
+
+
+  	
+  });
 });
