@@ -5,7 +5,7 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/ethereum/web3.js@latest/dist/web3.js"></script>
 
 <script type="text/javascript">
-	var factoryAddress = '0xaE6E405ffaB7476C25B349c10928bc0A24FD2244';
+	var factoryAddress = '0xedaD780586Cd96691b941507c4CF2d504b3a9961';
 	var factoryContract;
 	var customer;
 	var supplier;
@@ -19,7 +19,13 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "a",
+          "name": "escrow",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "createdBy",
           "type": "address"
         }
       ],
@@ -47,8 +53,8 @@
       ],
       "name": "createEscrow",
       "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
+      "payable": true,
+      "stateMutability": "payable",
       "type": "function"
     }
   ];
@@ -112,16 +118,19 @@ window.addEventListener('load', async () => {
 			customer = document.getElementById("customer").value;
 			supplier = document.getElementById("supplier").value;
 			arbiter = document.getElementById("arbiter").value;
+			amount = document.getElementById("amount").value * 1e18;
 			dump("account is "+account);
+			dump("amount is "+amount);
 
 			factoryContract.events.EscrowCreated()
 			.on("data", function(evt){
-
-				dump("escrow created at:" + evt.returnValues.a);
+				//filter out all events from other people
+				if(evt.returnValues.createdBy == account)
+					dump("escrow created at:" + evt.returnValues.escrow);
 			});
 
 			factoryContract.methods.createEscrow(customer,supplier,arbiter)
-			.send({from: account})
+			.send({'from': account, 'value': amount})
 			.on('transactionHash', function(hash){
 				dump("transactionHash:" + hash);
 			})
@@ -160,7 +169,13 @@ window.addEventListener('load', async () => {
     						name="arbiter" 
     						id="arbiter" 
     						value="0xc0cea0775c22fFC0d18B106370640F459Fce7063"/><br/>
-    <button onclick="deploy();">create escrow</button>
+
+    amount (ether) <input type="text" 
+    						name="amount" 
+    						id="amount" 
+    						value="0.01"/><br/>
+
+    <button onclick="deploy();">create and fund escrow</button>
     <br><br><br>
     <p>stdout:</p>
     <div id="stdout"></div>
