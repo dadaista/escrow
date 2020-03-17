@@ -15,6 +15,9 @@ contract Escrow{
     uint8 public claimerQuota;
     uint8 public opponentQuota;
     
+
+    event PaymentDone(uint256 amount, address recipient);
+
     constructor(address payable _customer, 
                 address payable _supplier,
                 address payable _arbiter) public{
@@ -72,8 +75,22 @@ contract Escrow{
         PAID = true;
 
         uint256 balance = address(this).balance;
-        claimer.transfer((balance/100) * claimerQuota);
-        opponent.transfer((balance/100) * opponentQuota);
+
+        uint256 amount = (balance/100) * claimerQuota;
+
+        if(amount>0){
+            claimer.transfer(amount);
+            emit PaymentDone(amount , claimer);
+        }
+
+        amount = (balance/100) * opponentQuota;
+
+        if(amount>0){
+            opponent.transfer(amount);
+            emit PaymentDone(amount , opponent);
+        }
+
+        
         
     }
     

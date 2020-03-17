@@ -137,11 +137,6 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     balAfter = await web3.eth.getBalance(escrow.address);
   });
 
-  it('approved escrow can be withdrawn by claimer only', async function () {
-    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
-    await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled;
-    await escrow.withdraw.sendTransaction({from:customer}).should.be.rejected;
-  });
 
   it('escalated escrow can be settled by arbiter only', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
@@ -151,12 +146,20 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     await escrow.settle.sendTransaction(50,{from:arbiter}).should.be.fulfilled;
   });
 
-  it('settled escrow show quotas for claimer and opponent', async function () {
+  it.only('settled escrow pays quotas for claimer and opponent', async function () {
+    await escrow.sendTransaction({from:customer,value:new BN(10).pow(new BN(18))});
+
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled;
     await escrow.settle.sendTransaction(40,{from:arbiter}).should.be.fulfilled;
-    (await escrow.claimerQuota.call()).should.be.equal(40);
-    (await escrow.opponentQuota.call()).should.be.equal(60);
+    (await escrow.claimerQuota.call()).toString().should.be.equal('40');
+    (await escrow.opponentQuota.call()).toString().should.be.equal('60');
+
+   
+    let ticket = await escrow.withdraw.sendTransaction({from:supplier});
+    
+    console.log(ticket);
+
   });
 
 
