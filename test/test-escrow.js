@@ -1,5 +1,7 @@
 const Escrow = artifacts.require("Escrow");
 
+var BN = web3.utils.BN;
+
 const chai = require('chai');
 
 const should = chai
@@ -18,9 +20,9 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     let bal = await web3.eth.getBalance(escrow.address);
     console.log('bal:'+bal);
     assert.equal( bal , 0);
-    await escrow.sendTransaction({from:customer,value:1});
+    await escrow.sendTransaction({from:customer,value:1000});
     bal = await web3.eth.getBalance(escrow.address);
-    assert.equal( bal , 1);
+    assert.equal( bal , 1000);
     console.log("bal:"+bal);
   });
 
@@ -36,6 +38,11 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     await escrow.approve.sendTransaction({from:supplier}).should.be.rejected;
     await escrow.approve.sendTransaction({from:arbiter}).should.be.rejected;
   });
+
+
+  it('arbiter cannot claim', async function () {
+    await escrow.claim.sendTransaction({from:arbiter}).should.be.rejected;
+  });  
 
   it('customer or supplier can claim and become claimer', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
@@ -61,16 +68,19 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
  
   });  
 
-  it('arbiter cannot claim', async function () {
-    await escrow.claim.sendTransaction({from:arbiter}).should.be.rejected; 
-  });
-
   it('customer can approve claim of supplier', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(supplier);    
     await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled; 
     (await escrow.APPROVED.call()).should.be.equal(true);
   });
+
+   it('customer can reject claim of supplier', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(supplier);    
+    await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled; 
+    (await escrow.ESCALATED.call()).should.be.equal(true);
+  }); 
 
   it('supplier can approve claim of customer', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
@@ -79,6 +89,12 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     (await escrow.APPROVED.call()).should.be.equal(true);
   });
 
+  it('supplier can reject claim of customer', async function () {
+    await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
+    (await escrow.claimer.call()).should.be.equal(customer);    
+    await escrow.reject.sendTransaction({from:supplier}).should.be.fulfilled; 
+    (await escrow.ESCALATED.call()).should.be.equal(true);
+  });
 
   it('supplier cannot approve his own claim', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
@@ -93,12 +109,13 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   });
 
 
-  it('arbiter can approve supplier or customer claim', async function () {
+  it('arbiter cannot approve supplier or customer claim', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(supplier);    
-    await escrow.approve.sendTransaction({from:arbiter}).should.be.fulfilled; 
-    (await escrow.APPROVED.call()).should.be.equal(true);
+    await escrow.approve.sendTransaction({from:arbiter}).should.be.rejected; 
   });
+
+
 
   it('unclaimed escrow cannot be approved', async function () {
     await escrow.approve.sendTransaction({from:supplier}).should.be.rejected;
@@ -115,13 +132,31 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   it('approved escrow can be withdrawn', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled;
+    balBefore = await web3.eth.getBalance(escrow.address);
     await escrow.withdraw.sendTransaction({from:supplier}).should.be.fulfilled;
+    balAfter = await web3.eth.getBalance(escrow.address);
   });
 
   it('approved escrow can be withdrawn by claimer only', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled;
     await escrow.withdraw.sendTransaction({from:customer}).should.be.rejected;
+  });
+
+  it('escalated escrow can be settled by arbiter only', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled;
+    await escrow.settle.sendTransaction(50,{from:customer}).should.be.rejected;
+    await escrow.settle.sendTransaction(50,{from:supplier}).should.be.rejected;
+    await escrow.settle.sendTransaction(50,{from:arbiter}).should.be.fulfilled;
+  });
+
+  it('settled escrow show quotas for claimer and opponent', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled;
+    await escrow.settle.sendTransaction(40,{from:arbiter}).should.be.fulfilled;
+    (await escrow.claimerQuota.call()).should.be.equal(40);
+    (await escrow.opponentQuota.call()).should.be.equal(60);
   });
 
 
