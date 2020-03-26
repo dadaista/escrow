@@ -146,7 +146,7 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     await escrow.settle.sendTransaction(50,{from:arbiter}).should.be.fulfilled;
   });
 
-  it.only('settled escrow pays quotas for claimer and opponent', async function () {
+  it('settled escrow pays quotas for claimer and opponent', async function () {
     await escrow.sendTransaction({from:customer,value:new BN(10).pow(new BN(18))});
 
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
@@ -161,7 +161,6 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     console.log(ticket);
 
   });
-
 
 
 
