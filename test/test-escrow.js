@@ -8,6 +8,14 @@ const should = chai
   .use(require('chai-as-promised'))
   .should();
 
+var state = {};
+state.UNCLAIMED  = 10;
+state.CLAIMED    = 20;
+state.APPROVED   = 30;
+state.ESCALATED  = 40;
+state.SETTLED    = 50;
+state.PAID       = 60;
+
 contract('e-scrow', function ([customer, supplier, arbiter]) {
 
   var escrow;
@@ -57,13 +65,13 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
 
   it('unclaimed escrow can be CLAIMED', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
-    (await escrow.CLAIMED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.CLAIMED));
  
   });
 
  it('funds cannot be claimed more than once', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
-    (await escrow.CLAIMED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.CLAIMED));
     await escrow.claim.sendTransaction({from:supplier}).should.be.rejected;
  
   });  
@@ -72,28 +80,28 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(supplier);    
     await escrow.approve.sendTransaction({from:customer}).should.be.fulfilled; 
-    (await escrow.APPROVED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.APPROVED));
   });
 
    it('customer can reject claim of supplier', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(supplier);    
     await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled; 
-    (await escrow.ESCALATED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.ESCALATED));
   }); 
 
   it('supplier can approve claim of customer', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(customer);    
     await escrow.approve.sendTransaction({from:supplier}).should.be.fulfilled; 
-    (await escrow.APPROVED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.APPROVED));
   });
 
   it('supplier can reject claim of customer', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
     (await escrow.claimer.call()).should.be.equal(customer);    
     await escrow.reject.sendTransaction({from:supplier}).should.be.fulfilled; 
-    (await escrow.ESCALATED.call()).should.be.equal(true);
+    (await escrow.state.call()).toString().should.be.equal(String(state.ESCALATED));
   });
 
   it('supplier cannot approve his own claim', async function () {

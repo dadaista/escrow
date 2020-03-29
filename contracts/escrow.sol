@@ -4,12 +4,13 @@ contract Escrow{
     address arbiter;
     address payable customer;
     address payable supplier;
-    bool public UNCLAIMED  = true;
-    bool public CLAIMED    = false;
-    bool public APPROVED   = false;
-    bool public ESCALATED  = false;
-    bool public SETTLED    = false;
-    bool public PAID       = false;
+    uint8 public UNCLAIMED  = 10;
+    uint8 public CLAIMED    = 20;
+    uint8 public APPROVED   = 30;
+    uint8 public ESCALATED  = 40;
+    uint8 public SETTLED    = 50;
+    uint8 public PAID       = 60;
+    uint8 public state      = UNCLAIMED;
     address payable public claimer;
     address payable public opponent;
     uint8 public claimerQuota;
@@ -30,52 +31,43 @@ contract Escrow{
     function () external payable{}
 
     function claim() external{
-        require(UNCLAIMED);
+        require(state == UNCLAIMED);
         require(msg.sender == customer || msg.sender == supplier);
         claimer = msg.sender;
-
+        
         if(claimer == customer) opponent=supplier;
         else opponent = customer;
-
-        CLAIMED = true;
-        UNCLAIMED = false;
+        
+        state = CLAIMED;
     }
     
     function reject() external{
-        require(CLAIMED);
+        require(state == CLAIMED);
         require(msg.sender == opponent);
-        ESCALATED = true;
-        CLAIMED = false;
-
+        state = ESCALATED;
     }    
     
     function approve() external{
-        require(CLAIMED);
+        require(state == CLAIMED);
         require(msg.sender == opponent);
         claimerQuota = 100;
         opponentQuota = 0;
-        APPROVED = true;
-        CLAIMED = false;
+        state = APPROVED;
     }
 
     function settle(uint8 quota) external{
-        require(ESCALATED);
+        require(state == ESCALATED);
         require(msg.sender == arbiter);
         claimerQuota = quota;
         opponentQuota = 100 - quota;
-        ESCALATED = false;
-        SETTLED = true;
+        state = SETTLED;
     }
 
     
     function withdraw() external{
-        require (APPROVED || SETTLED);
-        if (APPROVED) APPROVED = false;
-        if (SETTLED) SETTLED = false;
-        PAID = true;
-
+        require (state == APPROVED || state == SETTLED);
+        state = PAID;
         uint256 balance = address(this).balance;
-
         uint256 amount = (balance/100) * claimerQuota;
 
         if(amount>0){
@@ -89,9 +81,6 @@ contract Escrow{
             opponent.transfer(amount);
             emit PaymentDone(amount , opponent);
         }
-
-        
-        
     }
     
 
