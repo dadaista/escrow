@@ -20,6 +20,7 @@ contract Escrow{
     
 
     event PaymentDone(uint256 amount, address recipient);
+    event StateChange(uint8 oldState, uint8 newState);
 
     constructor(address payable _customer, 
                 address payable _supplier,
@@ -41,12 +42,14 @@ contract Escrow{
         else opponent = customer;
         
         state = CLAIMED;
+        emit StateChange(UNCLAIMED, CLAIMED);
     }
     
     function reject() external{
         require(state == CLAIMED);
         require(msg.sender == opponent);
         state = ESCALATED;
+        emit StateChange (CLAIMED, ESCALATED);
     }    
     
     function approve() external{
@@ -55,6 +58,7 @@ contract Escrow{
         claimerQuota = 100;
         opponentQuota = 0;
         state = APPROVED;
+        emit StateChange(CLAIMED, APPROVED);
     }
 
     function settle(uint8 quota) external{
@@ -63,12 +67,17 @@ contract Escrow{
         claimerQuota = quota;
         opponentQuota = 100 - quota;
         state = SETTLED;
+        emit StateChange(ESCALATED, SETTLED);
     }
 
     
     function withdraw() external{
         require (state == APPROVED || state == SETTLED);
+        
+        if(state == APPROVED) emit StateChange(APPROVED, PAID);
+        if(state == SETTLED) emit StateChange(SETTLED, PAID);
         state = PAID;
+
         uint256 balance = address(this).balance;
         uint256 amount = (balance/100) * claimerQuota;
 
