@@ -4,9 +4,11 @@ contract Escrow{
     address arbiter;
     address payable customer;
     address payable supplier;
-    uint8 public UNCLAIMED  = 10;
-    uint8 public CLAIMED    = 20;
-    uint8 public APPROVED   = 30;
+    uint8 public UNCLAIMED = 10;
+    uint8 public PAY_CLAIMED = 20;
+    uint8 public REFUND_CLAIMED = 25;
+    uint8 public PAY_CLAIM_APPROVED = 30;
+    uint8 public REFUND_CLAIM_APPROVED = 35;
     uint8 public ESCALATED  = 40;
     uint8 public SETTLED    = 50;
     uint8 public PAID       = 60;
