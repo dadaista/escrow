@@ -18,6 +18,8 @@ state.ESCALATED = 40;
 state.SETTLED = 50;
 state.PAID = 60;
 
+const ether = new BN(10).pow(new BN(18));
+
 contract('e-scrow', function ([customer, supplier, arbiter]) {
 
   var escrow;
@@ -55,28 +57,26 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   });  
 
 
-  it('unclaimed escrow can be CLAIMED by customer as payment', async function () {
+  it('unclaimed escrow can be CLAIMED by customer as refund', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
-    (await escrow.state.call()).toString().should.be.equal(String(state.PAY_CLAIMED));
+    (await escrow.state.call()).toString().should.be.equal(String(state.REFUND_CLAIMED));
  
   });
 
-  it('unclaimed escrow can be CLAIMED by supplier as refund', async function () {
-    await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
-    (await escrow.state.call()).toString().should.be.equal(String(state.REFUND_CLAIMED));
+  it('unclaimed escrow can be CLAIMED by supplier as pay', async function () {
+    await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
+    (await escrow.state.call()).toString().should.be.equal(String(state.PAY_CLAIMED));
  
   });  
 
  it('funds claimed by customer cannot be claimed by supplier', async function () {
     await escrow.claim.sendTransaction({from:customer}).should.be.fulfilled;
-    (await escrow.state.call()).toString().should.be.equal(String(state.PAY_CLAIMED));
     await escrow.claim.sendTransaction({from:supplier}).should.be.rejected;
  
   });  
 
  it('funds claimed by supplier cannot be claimed by customer', async function () {
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
-    (await escrow.state.call()).toString().should.be.equal(String(state.REFUND_CLAIMED));
     await escrow.claim.sendTransaction({from:customer}).should.be.rejected;
  
   });  
@@ -160,15 +160,12 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   });
 
   it('settled escrow pays quotas for claimer and opponent', async function () {
-    await escrow.sendTransaction({from:customer,value:new BN(10).pow(new BN(18))});
+    await escrow.sendTransaction({from:customer,value: ether});
 
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled;
-    await escrow.settle.sendTransaction(40,{from:arbiter}).should.be.fulfilled;
-    (await escrow.supplierQuota.call()).toString().should.be.equal('40');
-    (await escrow.customerQuota.call()).toString().should.be.equal('60');
-
-   
+    await escrow.settle.sendTransaction(new BN(0.4).mul(ether),{from:arbiter}).should.be.fulfilled;
+  
     let ticket = await escrow.withdraw.sendTransaction({from:supplier});
     
     console.log(ticket);
