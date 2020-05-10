@@ -20,15 +20,25 @@ A settled fund can be liquidated with withdraw() by the party eligible to pull m
 
 
 UNCLAIMED -- claim by supplier--> PAY_CLAIMED
+
 UNCLAIMED -- claim by customer--> REFUND_CLAIMED
+
 PAY_CLAIMED -- reject --> ESCALATED
+
 REFUND_CLAIMED -- reject --> ESCALATED
+
 PAY_CLAIMED -- accept by customer --> PAY_CLAIM_ACCEPTED
+
 REFUND_CLAIMED -- accept by supplier --> REFUND_CLAIM_ACCEPTED
+
 ESCALATED -- settle by arbiter --> SETTLED
+
 PAY_CLAIM_ACCEPTED -- withdraw --> PAID
+
 REFUND_CLAIM_ACCEPTED -- withdraw --> PAID
+
 SETTLED -- withdraw --> PAID
+
 
 
 
