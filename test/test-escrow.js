@@ -18,7 +18,9 @@ state.ESCALATED = 40;
 state.SETTLED = 50;
 state.PAID = 60;
 
-const ether = new BN(10).pow(new BN(18));
+const ether   = new BN(10).pow(new BN(18));
+const gwei   = new BN(10).pow(new BN(9));
+const wei2eth = (amount) => parseFloat(new BN(amount).div(gwei).toString()) / 1000000000;  
 
 contract('e-scrow', function ([customer, supplier, arbiter]) {
 
@@ -32,10 +34,10 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
     let bal = await web3.eth.getBalance(escrow.address);
     console.log('bal:'+bal);
     assert.equal( bal , 0);
-    await escrow.sendTransaction({from:customer,value:1000});
+    await escrow.sendTransaction({from:customer,value:ether});
     bal = await web3.eth.getBalance(escrow.address);
-    assert.equal( bal , 1000);
-    console.log("bal:"+bal);
+    assert.equal( bal , ether);
+    console.log("bal (ether):"+wei2eth(bal));
   });
 
 
@@ -160,15 +162,40 @@ contract('e-scrow', function ([customer, supplier, arbiter]) {
   });
 
   it('settled escrow pays quotas for claimer and opponent', async function () {
-    await escrow.sendTransaction({from:customer,value: ether});
+    //define a util function to split a big number amount passing a percentage
+    // example percentageBN(240,30) return 30% of 240
+    const percentageBN = (amount,percent) => new BN(percent).mul(amount).div(new BN(100));
 
+    //lets get the balance in the escrow
+    let balance = await web3.eth.getBalance(escrow.address);
+    console.log("escrow balance (eth):"+wei2eth(balance));
+
+    //lets escalate to arbiter
     await escrow.claim.sendTransaction({from:supplier}).should.be.fulfilled;
     await escrow.reject.sendTransaction({from:customer}).should.be.fulfilled;
-    await escrow.settle.sendTransaction(new BN(0.4).mul(ether),{from:arbiter}).should.be.fulfilled;
+
+    //now arbiter call settle with 40% of funds to supplier
+    await escrow.settle.sendTransaction(percentageBN(ether,40),{from:arbiter}).should.be.fulfilled;
   
+    //before withdraw lets get the balances of the parties
+    balSupplierBefore = await web3.eth.getBalance(supplier);
+    balCustomerBefore = await web3.eth.getBalance(customer);
+
+    //one of the parties invokes withdraw
     let ticket = await escrow.withdraw.sendTransaction({from:supplier});
     
-    console.log(ticket);
+    //lets recalculate the balances after the withdrawal
+    balSupplierAfter = await web3.eth.getBalance(supplier);
+    balCustomerAfter = await web3.eth.getBalance(customer);    
+    
+    //console.log(ticket);
+    //lets print the received monie for the freelancer
+    console.log("supplier receives (eth):"+
+                 (wei2eth(balSupplierAfter) - wei2eth(balSupplierBefore)));
+
+    //lets print the received monie for the customer
+    console.log("customer receives (eth):"+
+                 (wei2eth(balCustomerAfter) - wei2eth(balCustomerBefore)));
 
   });
 
